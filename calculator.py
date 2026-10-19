@@ -4,19 +4,15 @@ root = tk.Tk()
 root.geometry('350x450')
 root.title('calculator')
 
-# Метка для вывода (заменил lable на label для грамотности, но оставил ваше имя переменной)
 lable = tk.Label(root, width=250, height=5, background="white", anchor="e", font=("Arial", 14))
 lable.pack(padx=10, pady=10)
 
-result = ""  # Здесь храним текущее выражение
+result = ""
 
 
 def insert_value(value):
     global result
-    # Список операторов
     operators = ["+", "-", "*", "/", "%"]
-
-    # Если нажали "=", вызываем математику
     if value == "=":
         maths()
         return
@@ -41,10 +37,101 @@ def insert_value(value):
     print(result)
 
 
+# --- Пункт 6: 5 функций ---
+def summy(a, b):
+    return a + b
+
+
+def multiply(a, b):
+    return a * b
+
+
+def divide(a, b):
+    if b == 0:
+        raise ZeroDivisionError
+    return a / b
+
+
+def diff(a, b):
+    return a - b
+
+
+def result_math(expr):
+    tokens = []
+    i = 0
+    while i < len(expr):
+        if expr[i].isdigit() or expr[i] == '.':
+            num = ""
+            while i < len(expr) and (expr[i].isdigit() or expr[i] == '.'):
+                num += expr[i]
+                i += 1
+            tokens.append(float(num))
+        elif expr[i] in "+-*/%":
+            tokens.append(expr[i])
+            i += 1
+        else:
+            i += 1
+
+    if not tokens:
+        return 0
+
+    pos = 0
+
+    def peek():
+        return tokens[pos] if pos < len(tokens) else None
+
+    def consume():
+        nonlocal pos
+        val = tokens[pos]
+        pos += 1
+        return val
+
+    def parse_factor():
+        if peek() == "-":
+            consume()
+            return -parse_factor()
+        val = consume()
+        if isinstance(val, float):
+            return val
+        raise ValueError("Ожидалось число")
+
+    def parse_term():
+        left = parse_factor()
+        while peek() in ("*", "/", "%"):
+            op = consume()
+            right = parse_factor()
+            if op == "*":
+                left = multiply(left, right)
+            elif op == "/":
+                left = divide(left, right)
+            elif op == "%":
+                left = left % right
+        return left
+
+    def parse_expr():
+        left = parse_term()
+        while peek() in ("+", "-"):
+            op = consume()
+            right = parse_term()
+            if op == "+":
+                left = summy(left, right)
+            else:
+                left = diff(left, right)
+        return left
+
+    return parse_expr()
+
+
 def maths():
     global result
     try:
-        out = str(eval(result))
+        res = result_math(result)
+
+        if res == int(res):
+            out = str(int(res))
+        else:
+            out = str(res)
+
         lable.config(text=out)
         result = out
 
@@ -54,7 +141,6 @@ def maths():
 
 
 def init():
-    # Создаем фреймы один раз
     frame_top = tk.Frame(root, width=350, height=100, background='black')
     frame_bottom_left = tk.Frame(root, width=300, height=350, background='gray')
     frame_bottom_right = tk.Frame(root, width=100, height=350, background='white')
@@ -64,11 +150,9 @@ def init():
 def gui():
     frames = init()
 
-    # Упаковываем только нужные фреймы
     frames[1].pack(side="left", padx=10, pady=15)
     frames[2].pack(side="right", padx=10, pady=15)
 
-    # Кнопки с цифрами
     col = 0
     row = 0
     for step in range(10):
@@ -79,7 +163,6 @@ def gui():
             col = 0
             row += 1
 
-    # Кнопки операций
     operations = ["+", "-", "*", "/", "="]
     for step in range(len(operations)):
         op = operations[step]
